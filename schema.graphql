@@ -1,0 +1,30 @@
+schema {
+  query: Query
+}
+
+type Query {
+    diningHalls: [DiningHall]!,
+    foods: [Food]!
+}
+
+type DiningHall {
+    name: String,
+    meals: [Meal]!,
+    foods: [Food]!
+}
+
+type Meal {
+    categories: [Category]!,
+    foods: [Food]!
+}
+
+type Category {
+    name: String,
+    foods: [Food]!
+}
+
+type Food {
+    name: String,
+    ingredients: [String],
+    flags: [String]
+}
