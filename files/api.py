@@ -1,62 +1,23 @@
 from flask import Flask
-from flask import request
-import datetime
-import mysql.connector
-import requests
-import time
-import re
+from flask_graphql import GraphQLView
+import graphene
 
 app = Flask(__name__)
 
-mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="root",
-    database="dining"
-)
-cursor = mydb.cursor(dictionary=True)
+# mydb = mysql.connector.connect(
+#     host="localhost",
+#     user="root",
+#     passwd="root",
+#     database="dining"
+# )
+# cursor = mydb.cursor(dictionary=True)
 
-@app.route("/")
-def get():
-    res = {}
-    try:
-        cursor.execute("SELECT * FROM foods WHERE date LIKE '" + datetime.date.today(
-        ).strftime("%Y-%m-%d") + "'")
-        rows = cursor.fetchall()
+class Query(graphene.ObjectType):
+    hello = graphene.String(description='A typical hello world')
 
-        print('Total Row(s):', cursor.rowcount)
-        for row in rows:
-            res[row['name']] = {
-                'category': row['category'],
-                'meal': row['meal'],
-                'date': row['date'],
-                'location': row['location'],
-                'details': {
-                    'href': '/details?food-id=' + str(row['id'])
-                }
-            }
-    finally:
-        cursor.close()
+    def resolve_hello(self, info):
+        return 'World'
 
-    return res
+schema = graphene.Schema(query=Query)
 
-@app.route("/details")
-def details():
-    allergens = []
-    id = request.args.get('food-id')
-
-    cursor.execute("SELECT * FROM flags WHERE food_id=" + id + " AND type='allergen'")
-    rows = cursor.fetchall()
-    for row in rows:
-        allergens.append(row['name'])
-
-    cursor.execute("SELECT * FROM nutritLion WHERE food_id=" + id)
-    nutrition = cursor.fetchone()
-
-    return {
-        "allergens": allergens,
-        "ingredients": nutrition['ingredients']
-    }
-
-if __name__ == "__main__":
-    app.run()
+app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
