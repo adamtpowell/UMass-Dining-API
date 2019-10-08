@@ -1,30 +1,68 @@
 schema {
-  query: Query
+    query: Query
 }
 
-type Query {
-    diningHalls: [DiningHall]!,
-    foods: [Food]!
+interface hasFood {
+    # All of the arguments to foods take regexes, allowing flexible matching of ingredients.
+    foods(
+        name: String, 
+        withoutIngredients: [String], 
+        withIngredients: [String], 
+        withFlags: [String], 
+        withoutFlags: [String]): 
+            [Foods]
 }
 
-type DiningHall {
+type Query implements hasFood {
+    diningHalls(date: Date): [DiningHall],
+    diningHall(name: String, date: Date): DiningHall
+}
+
+type DiningHall implements hasFood {
     name: String,
-    meals: [Meal]!,
-    foods: [Food]!
+    meals: [Meal]
+    meal(name: String): Meal
 }
 
-type Meal {
-    categories: [Category]!,
-    foods: [Food]!
+type Meal implements hasFood{
+    categories: [Category]
+    category(name: String): category
 }
 
-type Category {
-    name: String,
-    foods: [Food]!
+type Category implements hasFood {
+    name: String
 }
 
 type Food {
     name: String,
-    ingredients: [String],
+    ingredients: String,
     flags: [String]
 }
+
+# A query which gives the foods for dinner at frank on 10/5/2019 on the express line with peppers in them
+{
+    diningHall(name: "Frank", date: "10/5/2019") {
+        meal(name: "Dinner") {
+            category(name: "Express") {
+                foods (with: ".*(red|green) peppers].*") {
+                    name
+                }
+            }
+        }
+    }
+}
+
+# A query which gives all late night options by dining hall and returns their ingredients
+{
+    diningHalls(date: "10/5/2019") {
+        meal(name: "Late Night") {
+            foods{
+                name,
+                ingredients
+            }
+        }
+    }
+}
+
+
+# Query which gives all the foods on a given day
