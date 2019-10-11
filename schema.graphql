@@ -20,12 +20,12 @@ type Query implements hasFood {
 
 type DiningHall implements hasFood {
     name: String,
-    meals: [Meal]
+    meals: [Meal],
     meal(name: String): Meal
 }
 
 type Meal implements hasFood{
-    categories: [Category]
+    categories: [Category],
     category(name: String): category
 }
 

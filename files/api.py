@@ -15,19 +15,22 @@ app = Flask(__name__)
 class Food(graphene.ObjectType):
     name = graphene.String()
     ingredients = graphene.List(graphene.String)
+    subfoods = graphene.List(Food)
 
     def resolve_name(parent, info):
-        return "Spaghetti"
+        return parent["name"]
     
     def resolve_ingredients(parent, info):
-        return ["Peanuts", "Tree Nuts", "Coconut", "Sesame"]
+        return parent["ingredients"]
+    
+    def resolve_subfoods(parent, info):
+        return [{"name": "Sub"}]
 
 class Query(graphene.ObjectType):
-    # this defines a Field `hello` in our Schema with a single Argument `name`
     foods = graphene.List(Food)
 
     def resolve_foods(parent, info):
-        return [Food()]
+        return [{"name": "Spaghetti", "ingredients": ["Test"]}, {"name": "Meatballs", "ingredients": ["Test"]}]
 
 schema = graphene.Schema(query=Query)
 
