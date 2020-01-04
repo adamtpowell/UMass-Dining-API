@@ -1,17 +1,12 @@
 from bs4 import BeautifulSoup
 import datetime
-import mysql.connector
+import sqlite3
 import requests
 import time
 import re
 
-mydb = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        passwd="password",
-        database="dining"
-    )
-cursor = mydb.cursor(dictionary=True)
+connection = sqlite3.connect("foods.db")
+cursor = connection.cursor()
 
 
 def location_id_to_name(id):
@@ -86,7 +81,7 @@ def upload_food(name, facts, date, location, meal, category):
         (name, date, meal, category, location_id_to_name(location))
     )
     
-    mydb.commit()
+    connection.commit()
 
     food_id = cursor.lastrowid
     # Insert nutrtion facts, messy code : (
@@ -95,7 +90,7 @@ def upload_food(name, facts, date, location, meal, category):
         (food_id, facts['total-carb'], facts['calories-from-fat'], facts['total-fat'], facts['sat-fat'], facts['trans-fat'], facts['cholesterol'],
         facts['sodium'], facts['total-carb'], facts['dietary-fiber'], facts['sugars'], facts['protein'], facts['ingredients'], facts['serving-size'])
     )
-    mydb.commit()
+    connection.commit()
 
     # Insert allergen and diet flags
     for allergen in facts['allergens']:
@@ -113,7 +108,7 @@ def upload_meals():
         "DELETE FROM foods WHERE date=%s",
         (today,)
     )
-    mydb.commit()
+    connection.commit()
     
     for location in [1,2,3,4]:
         print("Downloading meals from " + location_id_to_name(location))
@@ -131,9 +126,6 @@ def upload_meals():
                         upload_food(food, facts, today, location, meal, cat)
 
     print("Upload done")
-
-
-
 
 if __name__ == '__main__':
     upload_meals()
