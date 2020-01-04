@@ -1,3 +1,5 @@
 .vscode
 .dining-api
 .vagrant
+.db
+.log

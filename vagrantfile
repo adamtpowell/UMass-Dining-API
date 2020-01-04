@@ -8,5 +8,5 @@ Vagrant.configure("2") do |config|
     sudo python3 -m pip install --upgrade pip
   SHELL
   config.vm.provision :shell, path: "script.sh" # Provisioning for mysql server with script.sh
-  config.vm.network "forwarded_port", guest: 22, host: 9220, host_ip: "0.0.0.0"
+  config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "0.0.0.0"
 end
