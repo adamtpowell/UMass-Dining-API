@@ -2,3 +2,4 @@
 .dining-api
 *.db
 *.log
+.venv
