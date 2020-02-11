@@ -4,9 +4,22 @@ import sqlite3
 import requests
 import time
 import re
+import os.path
 
-connection = sqlite3.connect("foods.db")
-cursor = connection.cursor()
+
+if os.path.isfile("database/foods.db"): # If the database already exists, try going ahead and reading it.
+    connection = sqlite3.connect("database/foods.db")
+    cursor = connection.cursor()
+else: # If it does not exist, initialize it with the database/database.sql
+    connection = sqlite3.connect("database/foods.db")
+    cursor = connection.cursor()
+    try:
+        sql_file = open("database/database.sql")
+        cursor.execute(sql_file.read())
+    except IOError:
+        print("Failed to initialize database.")
+    finally:
+        sql_file.close()
 
 
 def location_id_to_name(id):
@@ -77,7 +90,7 @@ def upload_food(name, facts, date, location, meal, category):
 
     # Insert basic food information
     cursor.execute(
-        "INSERT INTO foods(name, date, meal, category, location) VALUES(%s,%s,%s,%s,%s)",
+        "INSERT INTO foods(name, date, meal, category, location) VALUES(?,?,?,?,?)",
         (name, date, meal, category, location_id_to_name(location))
     )
     
@@ -86,7 +99,7 @@ def upload_food(name, facts, date, location, meal, category):
     food_id = cursor.lastrowid
     # Insert nutrtion facts, messy code : (
     cursor.execute(
-        "INSERT INTO nutrition(food_id, calories, calories_from_fat, fat, sat_fat, trans_fat, cholesterol, sodium, carbs, fiber, sugar, protein, ingredients, serving_size) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        "INSERT INTO nutrition(food_id, calories, calories_from_fat, fat, sat_fat, trans_fat, cholesterol, sodium, carbs, fiber, sugar, protein, ingredients, serving_size) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (food_id, facts['total-carb'], facts['calories-from-fat'], facts['total-fat'], facts['sat-fat'], facts['trans-fat'], facts['cholesterol'],
         facts['sodium'], facts['total-carb'], facts['dietary-fiber'], facts['sugars'], facts['protein'], facts['ingredients'], facts['serving-size'])
     )
@@ -95,9 +108,10 @@ def upload_food(name, facts, date, location, meal, category):
     # Insert allergen and diet flags
     for allergen in facts['allergens']:
         cursor.execute(
-            "INSERT INTO flags(name, type, food_id) VALUES(%s, %s , %s)",
+            "INSERT INTO flags(name, type, food_id) VALUES(?, ? , ?)",
             (allergen, 'allergen', food_id)
         )
+
 
 # Upload all the meals from a location on a day.
 def upload_meals():
@@ -105,19 +119,19 @@ def upload_meals():
     today = datetime.date.today()
     print("Deleting today's meals")
     cursor.execute(
-        "DELETE FROM foods WHERE date=%s",
+        "DELETE FROM foods WHERE date=?",
         (today,)
     )
     connection.commit()
-    
-    for location in [1,2,3,4]:
+
+    for location in [1, 2, 3, 4]:
         print("Downloading meals from " + location_id_to_name(location))
         meals = load_meals(location, today.strftime("%m/%d/%y"))
         # These for loops reach every food, regardless of category.
         if len(meals.items()) == 0:
-            print(location_id_to_name(location),"is closed.")
+            print(location_id_to_name(location), "is closed.")
             continue
-        
+    
         print("Uploading meals from " + location_id_to_name(location))
         for meal, cats in meals.items():
             for cat, foods in cats.items():
